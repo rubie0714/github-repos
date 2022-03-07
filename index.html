@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible"
+        content="IE=edge">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css"
+        integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn"
+        crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+</head>
+
+<body>
+    <div id="app"
+        class="container">
+        <header>
+            <nav class="navbar navbar-light p-0 my-2">
+                <a class="navbar-brand"
+                    href="#">
+                    <img :src="userImg"
+                        width="30"
+                        height="30"
+                        class="d-inline-block align-top"
+                        alt="">
+                    {{ userName }}
+                </a>
+            </nav>
+        </header>
+
+        <content>
+            <h3>Repos List</h3>
+            <template v-for="repo in repos">
+
+                <div class="card mb-2 p-2">
+                    <h5 class="card-title">{{repo.title}}</h5>
+                    <p class="card-text">{{repo.description}}</p>
+                    <a :href="repo.html_url"
+                        class="btn border bg-light">Go Github</a>
+                </div>
+
+            </template>
+        </content>
+        <footer>
+
+        </footer>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.js"
+        integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <script>
+
+        var app = new Vue({
+            el: '#app',
+            data: {
+                userImg: '',
+                userName: '',
+                repos: [],
+                bottom: false,
+                count: 0,
+            },
+            mounted() {
+                this.init()
+                this.addRepo();
+            },
+
+
+            methods: {
+                init() {
+                    $.ajax({
+                        url: "https://api.github.com/users/rubie0714",
+                    }).then((res) => {
+                        console.log(res);
+                        this.userName = res.login;
+                        this.userImg = res.avatar_url;
+                    });
+                },
+
+                bottomVisible() {
+                    const scrollY = window.scrollY;
+                    const visible = document.documentElement.clientHeight;
+                    const pageHeight = document.documentElement.scrollHeight;
+                    const bottomOfPage = visible + scrollY >= pageHeight;
+
+                    return bottomOfPage || pageHeight < visible;
+
+                },
+                addRepo() {
+                    axios.get('https://api.github.com/users/rubie0714/repos')
+                        .then(response => {
+                            let apiRes = response.data[this.count];
+                            let repo = {
+                                title: apiRes.name,
+                                description: apiRes.description,
+                                url: apiRes.html_url,
+                            }
+                            this.repos.push(repo);
+                            if (this.bottomVisible()) {
+                                this.addRepo();
+                            }
+                            this.count++;
+                        }).catch(function (error) {
+
+                        })
+                },
+            },
+
+            created() {
+                window.addEventListener('scroll', () => {
+                    this.bottom = this.bottomVisible()
+                });
+                this.addRepo()
+            },
+
+            watch: {
+                bottom(bottom) {
+                    if (bottom) {
+                        this.addRepo()
+                    }
+                }
+            },
+        })
+
+    </script>
+</body>
+
+</html>
